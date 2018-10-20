@@ -4,15 +4,14 @@ using std::vector;
 using std::string;
 typedef vector<vector<string> > string2dvector;
 
-class tablegame {
+class game_base {
     public:
-    virtual int get_rows()= 0;
-    virtual int get_columns()=0;
+    void set_rows(int r){rows=r;}
+    void set_columns(int col){columns=col;}
     virtual bool is_valid_movement(string2dvector game_state, string move_params)=0;
     virtual void update_state (vector<vector<string> >& game_state, string move_params)=0;
-     
+    virtual string2dvector init_state()=0;
     protected:
     int rows;
     int columns;
-
 };

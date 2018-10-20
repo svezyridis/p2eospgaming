@@ -1,5 +1,6 @@
 #pragma once
 #include <eosiolib/eosio.hpp>
+#include "score4.cpp"
 
 using namespace eosio;
 enum gametype {chess,chekcers,connect4};
@@ -19,20 +20,35 @@ class tablegame : public contract{
         game() {
             init_game();
         }
-        account_name host;
+        uint64_t key; //auto increment
+        account_name id;
         account_name guest;
         account_name player_to_play;
         account_name winner = N(none);
         string2dvector game_state;
         gametype game_name;
-        string move_params;
+        uint64_t primary_key() const { return key; }
+        EOSLIB_SERIALIZE( game, (host)(guest)(player_to_play)(winner)(game_state)(game_name)(move_params))
+        
         //game initialization
         void init_game(){
             switch(game_name){
                 case connect4 :
-                    game_state=string2dvector(5,vector<string>(5,""));
+                    score4game *game_instance = new score4game();
+                    game_state=game_instance->init_state();
             }
 
         }
     };
+    // table definition
+    typedef eosio::multi_index< N(games), game> games;
+    // create new game action
+    void create(account_name& host);
+    // join game action
+    void join(uint64_t id, account_name& guest);
+    // make move action
+    void move(uint64_t id, account_name& by, string move_params);
+
+
+
 };
