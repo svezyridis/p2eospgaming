@@ -20,8 +20,8 @@ class tablegame : public contract{
         game() {
             init_game();
         }
-        uint64_t key; //auto increment
-        account_name id;
+        uint64_t id; //auto increment
+        account_name host;
         account_name guest;
         account_name player_to_play;
         account_name winner = N(none);
