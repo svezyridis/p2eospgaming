@@ -16,7 +16,7 @@ class tablegame : public contract{
     /**
      * @Game structure
      */
-    struct game{
+    struct [[eosio::table]] game{
         game() {
             init_game();
         }
@@ -27,7 +27,8 @@ class tablegame : public contract{
         account_name winner = N(none);
         string2dvector game_state;
         gametype game_name;
-        uint64_t primary_key() const { return key; }
+        uint64_t primary_key() const { return id; }
+        uint64_t secondary_key() const {return host;}
         EOSLIB_SERIALIZE( game, (host)(guest)(player_to_play)(winner)(game_state)(game_name)(move_params))
         
         //game initialization
@@ -41,14 +42,13 @@ class tablegame : public contract{
         }
     };
     // table definition
-    typedef eosio::multi_index< N(games), game> games;
+    typedef eosio::multi_index< N(games), game, indexed_by<N(host), const_mem_fun<game, uint64_t, &game::secondary_key>>> games;
     // create new game action
-    void create(account_name& host);
+    void create(const account_name& host, const gametype game_name);
     // join game action
-    void join(uint64_t id, account_name& guest);
+    void join(uint64_t id, const account_name& guest);
     // make move action
-    void move(uint64_t id, account_name& by, string move_params);
-
-
+    // @param by the player who wants to make the move
+    void move(uint64_t id, const account_name& by, string move_params);
 
 };
