@@ -8,5 +8,9 @@ class score4game : game_base{
     }
     bool is_valid_movement(string2dvector game_state, string move_params){return true;}
     void update_state (string2dvector& game_state, string move_params){eosio::print("Savvas");}
-    vector<string> init_state(){return vector<string>(rows,"");}   
+    vector<string> init_state(){
+        eosio::print("initializing");
+        vector<string> state(rows,"1");
+        return state;
+        }   
 };

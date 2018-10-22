@@ -1,7 +1,17 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Oct 22 13:34:31 2018",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Oct 22 17:39:54 2018",
     "version": "eosio::abi/1.0",
     "structs": [
+        {
+            "name": "clear",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                }
+            ]
+        },
         {
             "name": "create",
             "base": "",
@@ -42,7 +52,7 @@
                 },
                 {
                     "name": "game_state",
-                    "type": "string[]"
+                    "type": "string[][]"
                 },
                 {
                     "name": "game_name",
@@ -67,6 +77,11 @@
     ],
     "types": [],
     "actions": [
+        {
+            "name": "clear",
+            "type": "clear",
+            "ricardian_contract": ""
+        },
         {
             "name": "create",
             "type": "create",

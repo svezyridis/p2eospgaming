@@ -12,6 +12,13 @@ class tablegame : public contract
 {
   public:
     tablegame(account_name self) : contract(self){}
+        [[eosio::action]] void clear(uint64_t id){
+            require_auth(N(tablegames));
+            games existing_games(_self, _self);
+            auto iterator=existing_games.find(id);
+            if(iterator!=existing_games.end())
+                existing_games.erase(iterator);
+        }
 
         // create new game action
         [[eosio::action]] void create(const account_name &host, const string game_name)
@@ -30,6 +37,7 @@ class tablegame : public contract
             game.id = existing_games.available_primary_key();
             game.host = host;
             game.game_name = game_name;
+            game.game_state = initialize_state(game_name);
         });
         send_summary(host, "game successfully created");
     }
@@ -45,6 +53,11 @@ class tablegame : public contract
     // make move action
     // @param by the player who wants to make the move
     void move(uint64_t id, const account_name &by, string move_params);
+    //state initialization
+    vector<string> initialize_state(string game_name){
+        score4game* instance =new score4game();
+        return instance->init_state();
+    }
 
   private:
     /**
@@ -52,33 +65,22 @@ class tablegame : public contract
      */
     struct [[eosio::table]] game
     {
-        game()
-        {
-            init_game();
-        }
         uint64_t id; //auto increment
         account_name host;
-        account_name guest;
-        account_name player_to_play;
+        account_name guest= N(none);
+        account_name player_to_play =N(none);
         account_name winner = N(none);
         vector<string> game_state;
         string game_name;
         uint64_t primary_key() const { return id; }
         uint64_t secondary_key() const { return host; }
-        EOSLIB_SERIALIZE(game, (host)(guest)(player_to_play)(winner)(game_state)(game_name))
+        EOSLIB_SERIALIZE(game, (id)(host)(guest)(player_to_play)(winner)(game_state)(game_name))
 
-        //game initialization
-        void init_game()
-        {
-            if (game_name == "connect4")
-            {
-                score4game *game_instance = new score4game();
-                game_state = game_instance->init_state();
-            }
-        }
     };
     // table definition
-    typedef eosio::multi_index<N(game), game, indexed_by<N(host), const_mem_fun<game, uint64_t, &game::secondary_key>>> games;
+    typedef eosio::multi_index<N(game), game, 
+    indexed_by<N(host), const_mem_fun<game, uint64_t, &game::secondary_key>>
+    > games;
 
     void send_summary(account_name user, std::string message)
     {
@@ -91,4 +93,4 @@ class tablegame : public contract
     }
 };
 
-EOSIO_ABI(tablegame, (create)(notify))
+EOSIO_ABI(tablegame, (create)(notify)(clear))
