@@ -7,6 +7,6 @@ class score4game : game_base{
         set_columns(7);
     }
     bool is_valid_movement(string2dvector game_state, string move_params){return true;}
-    void update_state (vector<vector<string> >& game_state, string move_params){eosio::print("Savvas");}
-    string2dvector init_state(){return string2dvector(rows,vector<string>(columns,""));}   
+    void update_state (string2dvector& game_state, string move_params){eosio::print("Savvas");}
+    vector<string> init_state(){return vector<string>(rows,"");}   
 };

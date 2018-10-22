@@ -1,0 +1,92 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Oct 22 13:34:31 2018",
+    "version": "eosio::abi/1.0",
+    "structs": [
+        {
+            "name": "create",
+            "base": "",
+            "fields": [
+                {
+                    "name": "host",
+                    "type": "name"
+                },
+                {
+                    "name": "game_name",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "game",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "host",
+                    "type": "name"
+                },
+                {
+                    "name": "guest",
+                    "type": "name"
+                },
+                {
+                    "name": "player_to_play",
+                    "type": "name"
+                },
+                {
+                    "name": "winner",
+                    "type": "name"
+                },
+                {
+                    "name": "game_state",
+                    "type": "string[]"
+                },
+                {
+                    "name": "game_name",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "notify",
+            "base": "",
+            "fields": [
+                {
+                    "name": "user",
+                    "type": "name"
+                },
+                {
+                    "name": "msg",
+                    "type": "string"
+                }
+            ]
+        }
+    ],
+    "types": [],
+    "actions": [
+        {
+            "name": "create",
+            "type": "create",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "notify",
+            "type": "notify",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "game",
+            "type": "game",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "abi_extensions": []
+}
