@@ -27,6 +27,20 @@
             ]
         },
         {
+            "name": "join",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "guest",
+                    "type": "name"
+                }
+            ]
+        },
+        {
             "name": "game",
             "base": "",
             "fields": [
@@ -90,6 +104,11 @@
         {
             "name": "create",
             "type": "create",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "join",
+            "type": "join",
             "ricardian_contract": ""
         },
         {
