@@ -119,7 +119,7 @@
     ],
     "tables": [
         {
-            "name": "game",
+            "name": "games",
             "type": "game",
             "index_type": "i64",
             "key_names": [],

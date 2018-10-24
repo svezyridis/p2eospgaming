@@ -15,6 +15,7 @@ void tablegame::clear(uint64_t id)
     eosio_assert(iterator != existing_games.end(), "Object does not exist");
     if (iterator != existing_games.end())
         existing_games.erase(iterator);
+    send_summary(name("tablegames")," successfully erased table row, time: "+std::to_string(now()));
 }
 
 // create new game action
@@ -41,7 +42,7 @@ void tablegame::create(const name &host, const string game_name)
         game.game_name = game_name;
         game.game_state = initialize_state(game_name);
     });
-    send_summary(host, "game successfully created");
+    send_summary(host, "game successfully created, time: "+std::to_string(now()));
 }
 
 // reciept
@@ -62,14 +63,24 @@ void tablegame::join(uint64_t id, const name &guest)
     eosio_assert(iterator->host != guest, "You cannot play against yourself");
     existing_games.modify(iterator, _self, [&](auto &game) {
         game.guest = guest;
+        game.player_to_play= random_number()==0 ? guest : game.host; 
     });
     send_summary(guest, "you have successfully joined game");
     send_summary(iterator->host, guest.to_string() + " has joined your game");
+
 }
 // make move action
 // @param by the player who wants to make the move
-void move(uint64_t id, const capi_name &by, string move_params){
-    //TODO 
+void tablegame::move(uint64_t id, const name &by, string move_params){
+    games existing_games(_self, _self.value);
+    auto iterator = existing_games.find(id);
+    eosio_assert(iterator != existing_games.end(), "Game with ID specified could not be found");
+    eosio_assert(iterator->player_to_play==by,"It is not your turn to play");
+
+    score4game *instance = new score4game();
+    string error_message;
+    eosio_assert(instance->is_valid_movement(iterator->game_state,move_params, name{by}.to_string(), error_message),error_message.c_str());
+
 }
 //state initialization
 string2dvector tablegame::initialize_state(string game_name)
@@ -87,3 +98,12 @@ void tablegame::send_summary(name user, std::string message)
         std::make_tuple(user, name{user}.to_string() + " " + message))
         .send();
 }
+
+//pseudo rundom number generator using the block time
+int tablegame::random_number(){
+    capi_checksum160 calc_hash;
+    string time=std::to_string(now());
+    sha1( (char*)&time, time.length(), &calc_hash );
+    return calc_hash.hash[0]%2;
+}
+    

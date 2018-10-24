@@ -20,7 +20,7 @@ class tablegame : public contract
 
     [[eosio::action]] void join(uint64_t id, const name &guest);
 
-    [[eosio::action]] void move(uint64_t id, const capi_name &by, string move_params);
+    [[eosio::action]] void move(uint64_t id, const name &by, string move_params);
 
     private:
     /**
@@ -41,13 +41,17 @@ class tablegame : public contract
 
     };
     // table definition
-    typedef eosio::multi_index<"game"_n, game, 
+    typedef eosio::multi_index<"games"_n, game, 
     indexed_by<"byhost"_n, const_mem_fun<game, uint64_t, &game::get_host>>
     > games;
 
     void send_summary(name user, string message);
 
+    bool is_valid_move(string2dvector game_state,string move_params);
+
     string2dvector initialize_state(string game_name);
+    
+    int random_number();
 
 
 };
