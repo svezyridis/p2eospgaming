@@ -75,6 +75,24 @@
             ]
         },
         {
+            "name": "move",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "by",
+                    "type": "name"
+                },
+                {
+                    "name": "move_params",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "notify",
             "base": "",
             "fields": [
@@ -109,6 +127,11 @@
         {
             "name": "join",
             "type": "join",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "move",
+            "type": "move",
             "ricardian_contract": ""
         },
         {

@@ -12,15 +12,15 @@ class tablegame : public contract
 {
   public:
     using contract::contract;
-    [[eosio::action]] void clear(uint64_t id);
+    ACTION clear(uint64_t id);
 
-    [[eosio::action]] void create(const name &host, const string game_name);
+    ACTION create(const name &host, const string game_name);
 
-    [[eosio::action]] void notify(name user, std::string msg);
+    ACTION notify(name user, std::string msg);
 
-    [[eosio::action]] void join(uint64_t id, const name &guest);
+    ACTION join(uint64_t id, const name &guest);
 
-    [[eosio::action]] void move(uint64_t id, const name &by, string move_params);
+    ACTION move(uint64_t id, const name &by, string move_params);
 
     private:
     /**
@@ -56,4 +56,4 @@ class tablegame : public contract
 
 };
 
-EOSIO_DISPATCH(tablegame, (create)(notify)(clear)(join) )
+EOSIO_DISPATCH(tablegame, (create)(notify)(clear)(join)(move) )

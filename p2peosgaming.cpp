@@ -65,13 +65,17 @@ void tablegame::join(uint64_t id, const name &guest)
         game.guest = guest;
         game.player_to_play= random_number()==0 ? guest : game.host; 
     });
-    send_summary(guest, "you have successfully joined game");
-    send_summary(iterator->host, guest.to_string() + " has joined your game");
+    string summary="you have successfully joined game, next move by:"+iterator->player_to_play.to_string();
+    send_summary(guest, summary.c_str());
+    summary=guest.to_string() + " has joined your gamen, next move by:"+iterator->player_to_play.to_string();
+    send_summary(iterator->host, summary.c_str());
+
 
 }
 // make move action
 // @param by the player who wants to make the move
 void tablegame::move(uint64_t id, const name &by, string move_params){
+    require_auth(by);
     games existing_games(_self, _self.value);
     auto iterator = existing_games.find(id);
     eosio_assert(iterator != existing_games.end(), "Game with ID specified could not be found");
@@ -79,7 +83,18 @@ void tablegame::move(uint64_t id, const name &by, string move_params){
 
     score4game *instance = new score4game();
     string error_message;
-    eosio_assert(instance->is_valid_movement(iterator->game_state,move_params, name{by}.to_string(), error_message),error_message.c_str());
+    print("checking move validity");
+    eosio_assert(instance->is_valid_movement(iterator->game_state,move_params,name{by}.to_string(), error_message),error_message.c_str());
+    print("validity confirmed");
+    existing_games.modify(iterator, _self, [&](auto &game) {
+        print("updateing state");
+        game.game_state = instance->updated_state(iterator->game_state, move_params, name{by}.to_string());
+        if(game.player_to_play==game.host)
+            game.player_to_play=game.guest;
+        else
+            game.player_to_play=game.host;
+    });
+    send_summary(by," move executed");
 
 }
 //state initialization

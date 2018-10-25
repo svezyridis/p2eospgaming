@@ -1,5 +1,6 @@
 #include <eosiolib/eosio.hpp>
 #include "game_interface.hpp"
+using namespace eosio;
 class score4game : game_base{
     public:
     score4game(){
@@ -11,6 +12,7 @@ class score4game : game_base{
     bool is_valid_movement(string2dvector board, string move_params, string player, string& error_message)
     {
         int column=std::stoi(move_params);
+        --column;
         if(column<=0||column>7){
             error_message="Out of range, board is(6*7)";
             return false;
@@ -24,8 +26,18 @@ class score4game : game_base{
         return false;
 
         }
-    void update_state (string2dvector& game_state, string move_params, string player){
-        eosio::print("Savvas");
+    string2dvector updated_state (string2dvector board, string move_params, string player){
+        print("updating state");
+        int column=std::stoi(move_params);
+        --column;
+        for (auto itr=board.at(column).begin(); itr!=board.at(column).end(); itr++){
+            if(*itr==" "){
+                *itr=player;
+                break;
+            }
+        }
+        return board;
+
         }
 
     string2dvector init_state(){
