@@ -9,11 +9,12 @@ class score4game : game_base{
     }
 
 
-    bool is_valid_movement(string2dvector board, string move_params, string player, string& error_message)
+    bool is_valid_move(string2dvector board, string move_params, string player, string& error_message)
     {
         int column=std::stoi(move_params);
+        //player picks from 1-7, vector counts 0-6
         --column;
-        if(column<=0||column>7){
+        if(column<1||column>6){
             error_message="Out of range, board is(6*7)";
             return false;
         }

@@ -47,11 +47,13 @@ class tablegame : public contract
 
     void send_summary(name user, string message);
 
-    bool is_valid_move(string2dvector game_state,string move_params);
+    bool is_valid_movement(const string2dvector& game_state, const string& move_params, string player, string& error_message, string game_name);
 
     string2dvector initialize_state(string game_name);
     
     int random_number();
+
+    string2dvector updated_state(string2dvector game_state, string move_params, string player, string game_name);
 
 
 };
