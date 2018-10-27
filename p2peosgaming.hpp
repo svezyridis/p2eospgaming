@@ -55,6 +55,8 @@ class tablegame : public contract
 
     string2dvector updated_state(string2dvector game_state, string move_params, string player, string game_name);
 
+    bool is_winning_condition(const string2dvector& game_state, const string& move_params, string player, string game_name);
+
 
 };
 

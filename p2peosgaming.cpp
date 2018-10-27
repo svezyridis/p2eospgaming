@@ -15,7 +15,7 @@ void tablegame::clear(uint64_t id)
     eosio_assert(iterator != existing_games.end(), "Object does not exist");
     if (iterator != existing_games.end())
         existing_games.erase(iterator);
-    send_summary(name("tablegames")," successfully erased table row, time: "+std::to_string(now()));
+    send_summary(name("tablegames"), " successfully erased table row, time: " + std::to_string(now()));
 }
 
 // create new game action
@@ -28,7 +28,7 @@ void tablegame::create(const name &host, const string game_name)
     auto iterator = host_games.find(host.value);
     //check if host has other games in play
     if (iterator != host_games.end()) //player has other games active
-    { 
+    {
         for (auto loop_iterator = iterator; loop_iterator != host_games.end() && loop_iterator->host == host; loop_iterator++)
             eosio_assert((loop_iterator->game_name != game_name), "You can't create 2 games of the same type");
     }
@@ -38,7 +38,7 @@ void tablegame::create(const name &host, const string game_name)
         game.host = host;
         game.game_name = game_name;
     });
-    send_summary(host, "game successfully created, time: "+std::to_string(now()));
+    send_summary(host, "game successfully created, time: " + std::to_string(now()));
 }
 
 // reciept
@@ -59,37 +59,48 @@ void tablegame::join(uint64_t id, const name &guest)
     eosio_assert(iterator->host != guest, "You cannot play against yourself");
     existing_games.modify(iterator, _self, [&](auto &game) {
         game.guest = guest;
-        game.player_to_play= random_number()==0 ? guest : game.host; 
+        game.player_to_play = random_number() == 0 ? guest : game.host;
         game.game_state = initialize_state(game.game_name);
     });
-    string summary="you have successfully joined game, next move by:"+iterator->player_to_play.to_string();
+    string summary = "you have successfully joined game, next move by:" + iterator->player_to_play.to_string();
     send_summary(guest, summary.c_str());
-    summary=guest.to_string() + " has joined your gamen, next move by:"+iterator->player_to_play.to_string();
+    summary = guest.to_string() + " has joined your gamen, next move by:" + iterator->player_to_play.to_string();
     send_summary(iterator->host, summary.c_str());
 }
 
 // make move action
 // @param by the player who wants to make the move
-void tablegame::move(uint64_t id, const name &by, string move_params){
+void tablegame::move(uint64_t id, const name &by, string move_params)
+{
     require_auth(by);
     games existing_games(_self, _self.value);
     auto iterator = existing_games.find(id);
     eosio_assert(iterator != existing_games.end(), "Game with ID specified could not be found");
-    eosio_assert(iterator->player_to_play==by,"It is not your turn to play");
-
+    eosio_assert(iterator->winner=="none"_n, "This game has ended");
+    eosio_assert(iterator->player_to_play == by, "It is not your turn to play");
+    
     string error_message;
-    eosio_assert(is_valid_movement(iterator->game_state,move_params,name{by}.to_string(), error_message, iterator->game_name),error_message.c_str());
+    eosio_assert(is_valid_movement(iterator->game_state, move_params, name{by}.to_string(), error_message, iterator->game_name), error_message.c_str());
 
     existing_games.modify(iterator, _self, [&](auto &game) {
         game.game_state = updated_state(iterator->game_state, move_params, name{by}.to_string(), iterator->game_name);
-        if(game.player_to_play==game.host)
-            game.player_to_play=game.guest;
+        if (is_winning_condition(game.game_state, move_params, name{by}.to_string(), game.game_name))
+        {
+            game.winner = name(by);
+            send_summary(by, " You won the game!");
+            send_summary(by == game.host ? game.guest : game.host, " You lost the game!");
+            //TODO bet handling
+        }
         else
-            game.player_to_play=game.host;
+        {
+            if (game.player_to_play == game.host)
+                game.player_to_play = game.guest;
+            else
+                game.player_to_play = game.host;
+            send_summary(by, " move executed");
+            send_summary(iterator->player_to_play, " your turn to play");
+        }
     });
-    send_summary(by," move executed");
-    send_summary(iterator->player_to_play," your turn to play");
-
 }
 //state initialization
 string2dvector tablegame::initialize_state(string game_name)
@@ -105,11 +116,17 @@ string2dvector tablegame::updated_state(string2dvector game_state, string move_p
     return instance->updated_state(game_state, move_params, player);
 }
 // move validity check
-bool tablegame::is_valid_movement(const string2dvector& game_state, const string& move_params,  string player, string &error_message, string game_name){
+bool tablegame::is_valid_movement(const string2dvector &game_state, const string &move_params, string player, string &error_message, string game_name)
+{
     score4game *instance = new score4game();
     return instance->is_valid_move(game_state, move_params, player, error_message);
 }
-
+// winning condition check
+bool tablegame::is_winning_condition(const string2dvector &game_state, const string &move_params, string player, string game_name)
+{
+    score4game *instance = new score4game();
+    return instance->winning_condition(game_state, move_params, player);
+}
 
 void tablegame::send_summary(name user, std::string message)
 {
@@ -122,10 +139,10 @@ void tablegame::send_summary(name user, std::string message)
 }
 
 //pseudo rundom number generator using the block time
-int tablegame::random_number(){
+int tablegame::random_number()
+{
     capi_checksum160 calc_hash;
-    string time=std::to_string(now());
-    sha1( (char*)&time, time.length(), &calc_hash );
-    return calc_hash.hash[0]%2;
+    string time = std::to_string(now());
+    sha1((char *)&time, time.length(), &calc_hash);
+    return calc_hash.hash[0] % 2;
 }
-    
