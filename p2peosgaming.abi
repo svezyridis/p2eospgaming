@@ -13,6 +13,11 @@
             ]
         },
         {
+            "name": "transfer",
+            "base": "",
+            "fields": []
+        },
+        {
             "name": "create",
             "base": "",
             "fields": [
@@ -49,6 +54,10 @@
                     "type": "uint64"
                 },
                 {
+                    "name": "stake",
+                    "type": "uint64"
+                },
+                {
                     "name": "host",
                     "type": "name"
                 },
@@ -72,6 +81,28 @@
                     "name": "game_name",
                     "type": "string"
                 }
+            ]
+        },
+        {
+            "name": "st_transfer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                },
             ]
         },
         {
@@ -117,6 +148,11 @@
         {
             "name": "clear",
             "type": "clear",
+            "ricardian_contract": ""
+        },
+         {
+            "name": "transfer",
+            "type": "transfer",
             "ricardian_contract": ""
         },
         {

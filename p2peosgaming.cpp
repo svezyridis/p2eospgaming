@@ -14,6 +14,16 @@ void tablegame::clear(uint64_t id)
     auto iterator = existing_games.find(id);
     eosio_assert(iterator != existing_games.end(), "Object does not exist");
     if (iterator != existing_games.end())
+        action(
+                permission_level(_self, name("active")),
+                name("eosio.token"),
+                name("transfer"),
+                std::make_tuple(_self,
+                iterator->host,
+                asset(iterator->stake,symbol("EOS", 4)),
+                std::string("Pong madafaka!")
+                )
+            ).send();
         existing_games.erase(iterator);
     send_summary(name("tablegames"), " successfully erased table row, time: " + std::to_string(now()));
 }
@@ -39,6 +49,28 @@ void tablegame::create(const name &host, const string game_name)
         game.game_name = game_name;
     });
     send_summary(host, "game successfully created, time: " + std::to_string(now()));
+}
+//staking action
+void tablegame::transfer()
+{
+    auto data = unpack_action_data<st_transfer>();
+    if (data.from == _self || data.to != _self)
+        return;
+    asset quantity = data.quantity;
+    name host = data.from;
+    string game_name = data.memo;
+    if (quantity.is_valid())
+    {
+        int64_t stake = quantity.amount;
+        create_game(host, game_name);
+        //Update stake amount
+        games existing_games(_self, _self.value);
+        auto host_games = existing_games.get_index<"byhost"_n>();
+        auto iterator = host_games.find(host.value);
+        host_games.modify(iterator, _self, [&](auto &game) {
+            game.stake = stake;
+        });
+    }
 }
 
 // reciept
@@ -76,9 +108,9 @@ void tablegame::move(uint64_t id, const name &by, string move_params)
     games existing_games(_self, _self.value);
     auto iterator = existing_games.find(id);
     eosio_assert(iterator != existing_games.end(), "Game with ID specified could not be found");
-    eosio_assert(iterator->winner=="none"_n, "This game has ended");
+    eosio_assert(iterator->winner == "none"_n, "This game has ended");
     eosio_assert(iterator->player_to_play == by, "It is not your turn to play");
-    
+
     string error_message;
     eosio_assert(is_valid_movement(iterator->game_state, move_params, name{by}.to_string(), error_message, iterator->game_name), error_message.c_str());
 
@@ -135,6 +167,16 @@ void tablegame::send_summary(name user, std::string message)
         get_self(),
         name("notify"),
         std::make_tuple(user, name{user}.to_string() + " " + message))
+        .send();
+}
+
+void tablegame::create_game(name host, string game_name)
+{
+    action(
+        permission_level(host, name("active")),
+        get_self(),
+        name("create"),
+        std::make_tuple(host, game_name))
         .send();
 }
 
