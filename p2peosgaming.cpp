@@ -15,16 +15,15 @@ void tablegame::clear(uint64_t id)
     eosio_assert(iterator != existing_games.end(), "Object does not exist");
     if (iterator != existing_games.end())
         action(
-                permission_level(_self, name("active")),
-                name("eosio.token"),
-                name("transfer"),
-                std::make_tuple(_self,
-                iterator->host,
-                asset(iterator->stake,symbol("EOS", 4)),
-                std::string("Pong madafaka!")
-                )
-            ).send();
-        existing_games.erase(iterator);
+            permission_level(_self, name("active")),
+            name("eosio.token"),
+            name("transfer"),
+            std::make_tuple(_self,
+                            iterator->host,
+                            asset(iterator->stake, symbol("EOS", 4)),
+                            std::string("Pong madafaka!")))
+            .send();
+    existing_games.erase(iterator);
     send_summary(name("tablegames"), " successfully erased table row, time: " + std::to_string(now()));
 }
 
@@ -50,7 +49,9 @@ void tablegame::create(const name &host, const string game_name)
     });
     send_summary(host, "game successfully created, time: " + std::to_string(now()));
 }
+
 //staking action
+
 void tablegame::transfer()
 {
     auto data = unpack_action_data<st_transfer>();
@@ -58,10 +59,29 @@ void tablegame::transfer()
         return;
     asset quantity = data.quantity;
     name host = data.from;
-    string game_name = data.memo;
-    if (quantity.is_valid())
+    string memo = data.memo;
+    string action;
+    string delimiter = "-";
+    size_t pos = 0;
+    pos = memo.find(delimiter);
+    if (pos != std::string::npos)
     {
-        int64_t stake = quantity.amount;
+        action = memo.substr(0, pos);
+        memo.erase(0, pos + delimiter.length());
+    }
+    eosio_assert(action == "create" || action == "join", "Unsupported memo format,memo should be of the form: create-game_name / join-game_id");
+    eosio_assert(data.quantity.is_valid(), "Asset is not valid");
+    if (action == "create")
+    {
+
+        string game_name;
+        pos = memo.find(delimiter);
+        if (pos == std::string::npos)
+            game_name = memo;
+        else
+            eosio_assert(false, "Unsupported memo format,memo should be of the form: create-game_name / join-game_id");
+
+        uint64_t stake = quantity.amount;
         create_game(host, game_name);
         //Update stake amount
         games existing_games(_self, _self.value);
@@ -70,10 +90,41 @@ void tablegame::transfer()
         host_games.modify(iterator, _self, [&](auto &game) {
             game.stake = stake;
         });
+        //TODO send stake to bet handling contract
+    }
+    if (action == "join")
+    {
+        uint64_t game_id;
+        pos = memo.find(delimiter);
+        if (pos == std::string::npos)
+            game_id = std::stoi(memo);
+        else
+            eosio_assert(false, "Unsupported memo format,memo should be of the form: create-game_name / join-game_id");
+        games existing_games(_self, _self.value);
+        auto iterator = existing_games.find(game_id);
+        eosio_assert(iterator != existing_games.end(), "Game with the provided ID has not been found");
+        uint64_t stake = quantity.amount;
+        eosio_assert(stake >= iterator->stake, "Your bet does not meet host's requirements");
+        join_game(data.from, game_id);
+        // If the amount transfered overcovers the game stake, return the change
+        if (stake > iterator->stake)
+        {
+            eosio::action(
+                permission_level{_self, name("active")},
+                name("eosio.token"),
+                name("transfer"),
+                std::make_tuple(_self,
+                                data.from,
+                                asset(stake - iterator->stake, symbol("EOS", 4)),
+                                std::string("Keep your change madafaka")))
+                .send();
+        }
+        //TODO send stake to bet handling contract
     }
 }
 
 // reciept
+
 void tablegame::notify(name user, std::string msg)
 {
     require_auth(get_self());
@@ -81,6 +132,7 @@ void tablegame::notify(name user, std::string msg)
 }
 
 // join game action
+
 void tablegame::join(uint64_t id, const name &guest)
 {
     require_auth(guest);
@@ -102,6 +154,7 @@ void tablegame::join(uint64_t id, const name &guest)
 
 // make move action
 // @param by the player who wants to make the move
+
 void tablegame::move(uint64_t id, const name &by, string move_params)
 {
     require_auth(by);
@@ -135,6 +188,7 @@ void tablegame::move(uint64_t id, const name &by, string move_params)
     });
 }
 //state initialization
+
 string2dvector tablegame::initialize_state(string game_name)
 {
     score4game *instance = new score4game();
@@ -142,18 +196,21 @@ string2dvector tablegame::initialize_state(string game_name)
 }
 
 //state update
+
 string2dvector tablegame::updated_state(string2dvector game_state, string move_params, string player, string game_name)
 {
     score4game *instance = new score4game();
     return instance->updated_state(game_state, move_params, player);
 }
 // move validity check
+
 bool tablegame::is_valid_movement(const string2dvector &game_state, const string &move_params, string player, string &error_message, string game_name)
 {
     score4game *instance = new score4game();
     return instance->is_valid_move(game_state, move_params, player, error_message);
 }
 // winning condition check
+
 bool tablegame::is_winning_condition(const string2dvector &game_state, const string &move_params, string player, string game_name)
 {
     score4game *instance = new score4game();
@@ -169,6 +226,7 @@ void tablegame::send_summary(name user, std::string message)
         std::make_tuple(user, name{user}.to_string() + " " + message))
         .send();
 }
+// inline call of internal action create_game
 
 void tablegame::create_game(name host, string game_name)
 {
@@ -180,7 +238,18 @@ void tablegame::create_game(name host, string game_name)
         .send();
 }
 
+void tablegame::join_game(name guest, uint64_t game_id)
+{
+    action(
+        permission_level(guest, name("active")),
+        get_self(),
+        name("join"),
+        std::make_tuple(game_id, guest))
+        .send();
+}
+
 //pseudo rundom number generator using the block time
+
 int tablegame::random_number()
 {
     capi_checksum160 calc_hash;

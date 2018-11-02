@@ -62,6 +62,8 @@ class tablegame : public contract
 
     void create_game(name host, string game_name);
 
+    void join_game(name guest, uint64_t game_id);
+
     bool is_valid_movement(const string2dvector &game_state, const string &move_params, string player, string &error_message, string game_name);
 
     string2dvector initialize_state(string game_name);
